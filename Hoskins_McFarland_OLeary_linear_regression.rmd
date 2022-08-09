@@ -1,0 +1,136 @@
+---
+title: "Linear Regression for Global Mean Sea Level Data"
+author: "Thad Hoskins, Gina McFarland, Paul O'Leary"
+output:
+  word_document: default
+  html_document:
+  df_print: paged
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(ggpubr)
+library(boot)
+library(Metrics)
+```
+
+```{r}
+# pull in data from file
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+```
+
+```{r}
+# V3 vs V6  : Time vs. GMSL (Global Isostatic Adjustment (GIA) not 
+# applied) variation (mm) with respect to 20-year TOPEX/Jason collinear mean reference
+# vector of the widths of the fields
+gPv6 <- ggplot(datProj, aes(x=V3, y=V6))
+gPv6 <- gPv6 + geom_point(size = .3)
+gPv6
+```
+Raw data vs time shows a linear relationship
+
+```{r}
+
+gPv6 <- ggplot(datProj, aes(x=V3, y=V6))
+gPv6 <- gPv6 + geom_point(size = .3)
+gPv6
+
+```
+
+```{r}
+lin.cor<-cor(datProj$V3,datProj$V6)
+lin.cor
+```
+The correlation function gives a result of 0.974, which confirms what is visually apparent. These
+variables are highly correlated. 
+
+
+```{r}
+# We will split our data our into 70% for a training set and then 30% for a test set to see how accurate our model is based on linear regression
+
+train <- sample(1:nrow(datProj), size = 0.7*nrow(datProj), replace = FALSE)
+trainSet <- datProj[train,]
+
+#-train selects all the rows that are not in the training set to be in the test set
+testSet <- datProj[-train,]
+
+```
+
+
+```{r}
+train.LinFit <- lm(V6~V3,data=trainSet)
+summary(train.LinFit)
+```
+The null hypothesis is that the estimate is equal to zero. Based on the p-value, we reject the null. The estimate of V3 is statistically significantly different from zero. This means that there is a relationship between V3 and V6. To interpret the coefficient, an interval of measurement in V3 results in a increase in V6 of 3.081 mm rise in sea level in relation to the 20-year TOPEX/Jason collinear mean reference. 
+
+```{r}
+prediction_lm <- predict(train.LinFit,testSet)
+```
+
+```{r}
+#MAE
+mean(abs(prediction_lm - testSet$V6))
+
+#MSE
+(mse <- mean((prediction_lm - testSet$V6)^2))
+
+#RMSE
+sqrt(mse)
+
+summary(datProj$V6)
+
+```
+The errors are higher than the mean which is concerning about the validity of the prediction. 
+
+
+We have the predicted values from the training and the test set. We need to confirm the assumptions of linear regression are met to see if we can have confidence that the values accurately model the data. 
+```{r}
+linear.fit <- lm(V6~V3,data=datProj)
+summary(linear.fit)
+```
+
+```{r}
+plot(linear.fit$residuals)
+abline(a=0, b =0)
+```
+The residuals of the function do not appear randomly distributed as is required for linear regression to be 
+used to create inferences. This implies that the variables are not independent, which violates the assumptions.
+
+```{r}
+plot(x=linear.fit$residuals, y=linear.fit$fitted)
+
+```
+The fitted values (predicted values) vs residuals (errors) is used to detect non-linearity, unequal error variances, and outliers.
+For a linear regression model to be appropriate, the residual vs. fitted should have the following behavior:
+The residuals "bounce randomly" around the 0 line. This suggests that the assumption that the relationship is linear is reasonable.
+The residuals roughly form a "horizontal band" around the 0 line. This suggests that the variances of the error terms are equal.
+No one residual "stands out" from the basic random pattern of residuals. This suggests that there are no outliers.
+
+This plot does not follow the described behavior. It does not bounce randomly, it does not create a horizontal band around 0, and there are several that stand out from the rest.  
+
+```{r}
+plot(cooks.distance(linear.fit))
+```
+The Cook's distance plot shows that there are several high leverage points. This may distort 
+the outcome and accuracy of a regression. 
+
+```{r}
+acf(linear.fit$residuals)
+```
+The lines above the blue bar indicate that there is autocorrelation in the data. This is 
+problematic for a linear regression model because it means that the data are not independent, 
+which is a key assumption. 
+
+There are several tests which indicate that the linear regression model is not appropriate for this data.
+While the data are highly correlated and the lm function has a high R-squared value, every other 
+test shows this model is not appropriate. The residuals are not randomly distributed, the fitted vs residuals
+graph does not show the appropriate characteristics, there are several points with a high Cook's distance, 
+and the data also has autocorrelations. These indicate that the data are not independent and a different
+model would be more appropriate for inferences. 
+

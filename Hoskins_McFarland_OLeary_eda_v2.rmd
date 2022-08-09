@@ -1,0 +1,204 @@
+---
+title: "Exploratory Data Analysis for Global Mean Sea Level Data"
+author: "Thad Hoskins, Gina McFarland, Paul O'Leary"
+output:
+  word_document: default
+  html_document:
+  df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(ggpubr)
+library(smooth)
+library(forecast)
+```
+
+Following is an analysis of variables to help determine which would be the most appropriate response variable to analyze
+
+```{r}
+# V2 vs V6  : merged file cycle number vs. GMSL (Global Isostatic Adjustment (GIA) not 
+# applied) variation (mm) with respect to 20-year TOPEX/Jason collinear mean reference
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv6 <- ggplot(datProj, aes(x=V2, y=V6))
+gPv6 <- gPv6 + geom_point(size = .3)
+gPv6
+```
+Merged File Cycle # (V2) vs. Raw Data (Column V6) 
+
+```{r}
+# V6    : year+fraction of year (mid-cycle) vs.  GMSL (Global Isostatic Adjustment (GIA) not 
+# applied) variation (mm) with respect to 20-year TOPEX/Jason collinear mean reference
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv6 <- ggplot(datProj, aes(x=V3, y=V6))
+gPv6 <- gPv6 + geom_point(size = .3)
+gPv6
+```
+Time (V3) vs. Raw Data (Column V6)
+
+
+```{r}
+#V7 merged file cycle # vs. standard deviation of GMSL (GIA not applied) variation estimate (mm)
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv7 <- ggplot(datProj, aes(x=V3, y=V7))
+gPv7 <- gPv7 + geom_point(size = .3)
+gPv7
+```
+```{r}
+#V7: time  vs. standard deviation of GMSL (GIA not applied) 
+# variation estimate (mm)
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv7 <- ggplot(datProj, aes(x=V3, y=V7))
+gPv7 <- gPv7 + geom_point(size = .3)
+gPv7
+```
+Time (V3) vs. Standard Deviation of GMSL (Column V7)
+
+```{r}
+#V8: Time # vs. 8 smoothed (60-day Gaussian type filter) GMSL (GIA not applied) variation (mm)  with respect
+#to 20-year mean
+
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv8 <- ggplot(datProj, aes(x=V3, y=V8))
+gPv8 <- gPv8 + geom_point(size = .3)
+gPv8
+```
+Time (V3) vs.Smoothed (60-day Gaussian type filter) GMSL (Column V8)
+
+```{r}
+#V9: Time vs. GMSL (Global Isostatic Adjustment (GIA) applied) variation (mm) )  with respect to 20-year mean
+
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv9 <- ggplot(datProj, aes(x=V3, y=V9))
+gPv9 <- gPv9 + geom_point(size = .3)
+gPv9
+```
+
+Time (V3) vs. GMSL (Global Isostatic Adjustment (GIA) applied) variation (mm)) with respect to 20-year mean (V9)
+
+
+```{r}
+#V10: Time (V3) vs. standard deviation of GMSL (GIA applied) variation estimate (mm)
+
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv10 <- ggplot(datProj, aes(x=V3, y=V10))
+gPv10 <- gPv10 + geom_point(size = .3)
+gPv10
+```
+
+ Time (V3) vs. standard deviation of GMSL (GIA applied) variation estimate (mm) (v10)
+
+```{r}
+#V11: Time (V3) vs. smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm)) with respect to 20-year mean
+
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv11 <- ggplot(datProj, aes(x=V3, y=V11))
+gPv11 <- gPv11 + geom_point(size = .3)
+gPv11
+```
+Time (V3) vs. smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm)) with respect to 20-year mean (V11)
+
+
+```{r}
+#V12: Time vs. 12 smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm); annual and semi-annual signal removed )  with respect to 20-year mean
+# vector of the widths of the fields
+wths <- c(3,5,14,10,10,10,10,10,10,10,10,10)
+
+datProj <- read.fwf("GMSL_DATA.txt", wths, header = FALSE)
+
+gPv12 <- ggplot(datProj, aes(x=V3, y=V12))
+gPv12 <- gPv12 + geom_point(size = .3)
+gPv12
+```
+Time (V3) vs. 12 smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm); annual and semi-annual signal removed) (V12) 
+
+Field 6 has the raw data, and fields 7-12 have varying analyses on the raw data. Unsurprisingly, all
+graphs show similar trends. We concluded that it was best to study the raw data as opposed to data that
+has had any sort of manipulation or filtering for this analysis.
+
+```{r}
+length(datProj$V6)
+```
+1006 observations in the dataset
+```{r}
+summary(datProj$V6)
+```
+#GMSL (Global Isostatic Adjustment (GIA) not applied) variation (mm) with respect to 20-year TOPEX/Jason collinear mean reference
+#The TOPEX/Jason collinear mean reference is zero and these measurements are +/- from that point in mm
+
+There is data below 0. This makes sense because the TOPEX/Jason collinear mean reference is zero and these measurements are +/- from that point in mm.
+```{r}
+head(datProj$V6)
+tail(datProj$V6)
+```
+
+```{r}
+hist(datProj$V6)
+```
+
+```{r}
+ggqqplot(datProj$V6)
+```
+While the data in the middle looks to be normally distributed, the ends look problematic.
+
+```{r}
+# Missing data code: 99900.000
+sum(datProj$V6 == 99900.000)
+sum(datProj$V3 == 99900.000)
+
+sum(is.na(datProj$V6))
+sum(is.na(datProj$V3))
+
+```
+No missing data or NAs in our variables of interest
+
+
+```{r}
+outliers <- boxplot(datProj$V6)$out
+outliers
+```
+No outliers in our raw data
+
+```{r}
+
+g2 <- ggplot() + geom_line(data = datProj, aes(x=V3, y=V6)) + 
+      geom_line(aes(x = datProj$V3,y = ma(datProj$V6,order = 18)), color = "blue")
+g2
+
+```
+Smoothed to a moving average of 2 measurements per year. 
